@@ -3,7 +3,7 @@ import { sequelize } from "./database";
 
 const db = async function () {
   try {
-    await sequelize.sync({ force: true });
+    await sequelize.sync({ force: false });
   } catch (error) {
     throw new DatabaseConnectionError();
   }

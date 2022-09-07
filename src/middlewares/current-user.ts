@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { UnauthorizedError } from "../errors/unauthorized-error";
 
 interface UserPayload {
   id: string;
@@ -19,14 +20,23 @@ export const currentUser = (
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.session?.jwt) {
-    return next();
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization?.startsWith("Bearer")
+  ) {
+    // Set token from Bearer in header
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies?.token) {
+    token = req.cookies?.token;
   }
 
   try {
-    const payload = jwt.verify(req.session.jwt, "efwdsv") as UserPayload;
-    req.currentUser = payload;
-  } catch (err) {}
-
-  next();
+    const decoded = jwt.verify(token, "mysecret") as UserPayload;
+    req.currentUser = decoded;
+    next();
+  } catch (error) {
+    throw new UnauthorizedError("Not authorize to access this route");
+  }
 };

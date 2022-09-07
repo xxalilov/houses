@@ -6,5 +6,6 @@ export const createHouseValidator = [
     .withMessage("Price must be min 100 length and max 1000000 length"),
   body("lat").isFloat(),
   body("lng").isFloat(),
+  body("area").isFloat(),
   body("address").isString(),
 ];

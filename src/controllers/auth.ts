@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { asyncHandler } from "../middlewares/async";
 import { BadRequestError } from "../errors/bad-request-error";
 import { Password } from "../services/password";
+import { UnauthorizedError } from "../errors/unauthorized-error";
 
 /**
  * @desc  Signup user
@@ -22,24 +23,7 @@ const signup = asyncHandler(
     const user = await User.create(req.body);
     user.save();
 
-    // Generate JWT
-    const userJwt = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-      },
-      "efwdsv"
-    );
-
-    // Store it on session object
-    req.session = {
-      jwt: userJwt,
-    };
-
-    res.status(201).json({
-      status: 201,
-      data: user,
-    });
+    sendTokenResponse(user, 201, res);
   }
 );
 
@@ -66,24 +50,7 @@ const signin = asyncHandler(
       throw new BadRequestError("Email or password wrong!");
     }
 
-    // Generate JWT
-    const userJwt = jwt.sign(
-      {
-        id: existingUser.id,
-        email: existingUser.email,
-      },
-      "efwdsv"
-    );
-
-    // Store it on session object
-    req.session = {
-      jwt: userJwt,
-    };
-
-    res.status(200).json({
-      status: 200,
-      data: existingUser,
-    });
+    sendTokenResponse(existingUser, 200, res);
   }
 );
 
@@ -95,6 +62,10 @@ const signin = asyncHandler(
 const current = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = await req.currentUser;
+
+    if (!user) {
+      throw new UnauthorizedError("You must login");
+    }
     res.status(200).json({
       status: 200,
       data: user,
@@ -109,7 +80,7 @@ const current = asyncHandler(
  */
 const signout = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    req.session = null;
+    req.cookies = null;
 
     res.status(200).json({
       status: 200,
@@ -117,5 +88,36 @@ const signout = asyncHandler(
     });
   }
 );
+
+const sendTokenResponse = (user: User, statusCode: number, res: Response) => {
+  const token = jwt.sign(
+    {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      isAdmin: user.isAdmin,
+    },
+    "mysecret",
+    {
+      expiresIn: "30d",
+    }
+  );
+
+  const options = {
+    expires: new Date(Date.now() + 30 * 24 * 60 * 1000),
+    httpOnly: true,
+    secure: false,
+  };
+
+  if (process.env.NODE_ENV === "production") {
+    options.secure = true;
+  }
+
+  res
+    .status(statusCode)
+    .cookie("token", token, options)
+    .json({ status: statusCode, token });
+};
 
 export { signup, signin, signout, current };

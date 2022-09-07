@@ -14,7 +14,11 @@ const userAuth = (req: Request, res: Response, next: NextFunction) => {
 
 const adminAuth = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
+    console.log(req);
+
     const loggedUser = req.currentUser;
+
+    console.log("Hello", loggedUser);
 
     if (!loggedUser) {
       throw new UnauthorizedError("You must login");
