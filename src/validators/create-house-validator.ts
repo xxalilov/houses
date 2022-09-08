@@ -1,11 +1,9 @@
 import { body } from "express-validator";
 
 export const createHouseValidator = [
-  body("price")
-    .isInt({ min: 100, max: 1000000 })
-    .withMessage("Price must be min 100 length and max 1000000 length"),
-  body("lat").isFloat(),
-  body("lng").isFloat(),
-  body("area").isFloat(),
-  body("address").isString(),
+  body("price").isFloat().withMessage("price must be"),
+  body("lat").isFloat().withMessage("lat must be"),
+  body("lng").isFloat().withMessage("lng must be"),
+  body("area").isFloat().withMessage("area must be"),
+  body("address").isString().withMessage("address must be"),
 ];
